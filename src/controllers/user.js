@@ -1,56 +1,114 @@
 const User = require('../models/user');
 
 class UserController {
-    static create(req, res) {
-        const { name, email, password } = req.body;
-
-        const user = new User(name, email, password);
-        user.create();
-
-        res.status(201).json(user);
-    }
-
-    static read(req, res) {
-        const users = User.read();
-        res.status(200).json(users);
-    }
-
-    static readOne(req, res) {
-        const { id } = req.params;
-
-        const user = User.readOne(parseInt(id));
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+    async read(req, res) {
+        try {
+            const users = await User.findAll();
+            res.status(200).json({ data: users });
         }
-
-        res.status(200).json(user);
-    }
-
-    static update(req, res) {
-        const { id } = req.params;
-        const { name, email, password } = req.body;
-
-        const user = User.update(parseInt(id), name, email, password);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
         }
+    };
 
-        res.status(200).json(user);
-    }
+    async readOne(req, res) {
+        try {
+            if (!req.params.id) {
+                return res.status(400).json({ message: "Id is missing" });
+            }
 
-    static delete(req, res) {
-        const { id } = req.params;
+            const user = await User.findByPk(req.params.id);
 
-        const result = User.delete(parseInt(id));
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
 
-        if (!result) {
-            return res.status(404).json({ message: 'User not found' });
+            res.status(200).json({ data: user });
         }
+        catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
 
-        return res.status(204).json();
-    }
-}
+    async create(req, res) {
+        try {
+            const data = {
+                name: req.body.name,
+                email: req.body.email,
+                password: req.body.password,
+                created_at: new Date()
+            }
 
-module.exports = UserController
+            const result = await User.create(data);
+
+            res.status(201).json(result);
+        }
+        catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+
+    async update(req, res) {
+        try {
+            if (!req.params.id) {
+                return res.status(400).json({ message: "Id is missing" });
+            }
+
+            const data = {
+                name: req.body.name,
+                email: req.body.email,
+                password: req.body.password
+            }
+
+            const result = await User.update(data, {
+                where: {
+                    id: req.params.id
+                }
+            });
+
+            if (!result) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            res.status(200).json(result);
+        }
+        catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+
+    async delete(req, res) {
+        try {
+            if (!req.params.id) {
+                return res.status(400).json({ message: "Id is missing" });
+            }
+
+            const result = await User.destroy({
+                where: {
+                    id: req.params.id
+                }
+            });
+
+            if (!result) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            res.status(200).json({ data: result });
+        }
+        catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+};
+
+module.exports = UserController;
